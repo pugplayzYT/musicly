@@ -9,4 +9,9 @@
         android:id="@+id/uploadFragment"
         android:icon="@drawable/ic_upload"
         android:title="Upload" />
+
+    <item
+        android:id="@+id/profileMenuItem"
+        android:icon="@drawable/ic_profile"
+        android:title="Profile" />
 </menu>

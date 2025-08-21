@@ -78,9 +78,15 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentArtistProfileBinding.bind(view)
 
-        adapter = SongAdapter { song ->
-            mainVM.playOrToggleSong(song, isNewSong = true)
-        }.apply {
+        adapter = SongAdapter(
+            onSongClicked = { song ->
+                mainVM.playOrToggleSong(song, isNewSong = true)
+            },
+            onArtistClicked = {
+                // We are already on the artist's profile, so we don't need to do anything here.
+                // Tapping the artist name again does nothing.
+            }
+        ).apply {
             setOnItemLongClickListener { song ->
                 showOwnerMenu(song)
             }

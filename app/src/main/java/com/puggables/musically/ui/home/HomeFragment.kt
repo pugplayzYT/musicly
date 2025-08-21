@@ -17,7 +17,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private val homeViewModel: HomeViewModel by viewModels()
-    private val mainViewModel: MainViewModel by activityViewModels() // Shared ViewModel
+    private val mainViewModel: MainViewModel by activityViewModels()
     private lateinit var songAdapter: SongAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -28,11 +28,18 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun setupRecyclerView() = binding.songsRecyclerView.apply {
-        songAdapter = SongAdapter { song ->
-            mainViewModel.playOrToggleSong(song, isNewSong = true)
-            // Optionally navigate to a full player screen
-            // findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToPlayerFragment(song))
-        }
+        // UPDATED adapter instantiation
+        songAdapter = SongAdapter(
+            onSongClicked = { song ->
+                mainViewModel.playOrToggleSong(song, isNewSong = true)
+            },
+            onArtistClicked = { song ->
+                song.artistId?.let { artistId ->
+                    val action = HomeFragmentDirections.actionHomeFragmentToArtistProfileFragment(artistId)
+                    findNavController().navigate(action)
+                }
+            }
+        )
         adapter = songAdapter
         layoutManager = LinearLayoutManager(requireContext())
     }
