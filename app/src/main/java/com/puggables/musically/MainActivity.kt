@@ -7,7 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment // <-- THIS IMPORT WAS MISSING
 import androidx.navigation.ui.onNavDestinationSelected
 import coil.load
 import com.google.common.util.concurrent.MoreExecutors
@@ -19,6 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val mainViewModel: MainViewModel by viewModels()
+    private lateinit var navController: NavController
 
     private val FALLBACK_BASE = "https://cents-mongolia-difficulties-mortgage.trycloudflare.com"
 
@@ -29,27 +31,31 @@ class MainActivity : AppCompatActivity() {
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
+        navController = navHostFragment.navController
 
-        // Logic to handle clicks on the bottom navigation bar
         binding.bottomNavigation.setOnItemSelectedListener { item ->
+            if (item.itemId == navController.currentDestination?.id) {
+                return@setOnItemSelectedListener false
+            }
+
             when (item.itemId) {
-                // This handles the new Profile menu item
+                R.id.homeFragment -> {
+                    navController.navigate(R.id.homeFragment)
+                    true
+                }
+                R.id.uploadFragment -> {
+                    navController.navigate(R.id.uploadFragment)
+                    true
+                }
                 R.id.profileMenuItem -> {
                     val userId = MusicallyApplication.sessionManager.getUserId()
                     if (userId != -1) {
-                        // Use the global action to navigate to the profile fragment with the user's ID
                         val action = NavGraphDirections.actionGlobalArtistProfileFragment(userId)
                         navController.navigate(action)
-                    } else {
-                        // Optional: Handle case where user is somehow not logged in
                     }
                     true
                 }
-                // This handles the other menu items like Home and Upload by default
-                else -> {
-                    item.onNavDestinationSelected(navController)
-                }
+                else -> false
             }
         }
 
@@ -59,9 +65,11 @@ class MainActivity : AppCompatActivity() {
             binding.bottomNavigation.isVisible = !isAuth
             if (isAuth) binding.miniPlayer.isVisible = false
 
-            // This keeps the correct tab highlighted as you navigate
-            if (dest.id != R.id.artistProfileFragment) {
-                binding.bottomNavigation.menu.findItem(dest.id)?.isChecked = true
+            val menuItem = binding.bottomNavigation.menu.findItem(dest.id)
+            if (menuItem != null) {
+                menuItem.isChecked = true
+            } else if (dest.id == R.id.artistProfileFragment) {
+                binding.bottomNavigation.menu.findItem(R.id.profileMenuItem).isChecked = true
             }
         }
 
