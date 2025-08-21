@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <EditText
+            android:id="@+id/titleEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Song title"
+            android:textColor="@android:color/white"
+            android:textColorHint="#AAAAAA"/>
+
+        <EditText
+            android:id="@+id/albumEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Album (default: Single)"
+            android:layout_marginTop="12dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="#AAAAAA"/>
+
+        <EditText
+            android:id="@+id/genresEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Genres CSV (e.g. 1,2,4) - optional"
+            android:layout_marginTop="12dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="#AAAAAA"/>
+
+        <TextView
+            android:id="@+id/audioNameText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Audio: none"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="16dp"/>
+
+        <Button
+            android:id="@+id/pickAudioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pick audio"/>
+
+        <TextView
+            android:id="@+id/imageNameText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Image: none"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="16dp"/>
+
+        <Button
+            android:id="@+id/pickImageButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pick cover image (optional)"/>
+
+        <Button
+            android:id="@+id/uploadButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Upload"
+            android:layout_marginTop="20dp"/>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+</ScrollView>

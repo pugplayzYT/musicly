@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/splashFragment">
+
+    <!-- ===== Auth flow ===== -->
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.puggables.musically.ui.auth.SplashFragment"
+        android:label="Splash"
+        tools:layout="@layout/fragment_splash">
+        <action
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_splashFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpToInclusive="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.puggables.musically.ui.auth.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.puggables.musically.ui.auth.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/fragment_register">
+        <action
+            android:id="@+id/action_registerFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
+
+    <!-- ===== Main tabs (must match bottom_nav ids) ===== -->
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.puggables.musically.ui.home.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home">
+        <!-- Example navigation to full player (optional; you can navigate via ViewModel only) -->
+        <action
+            android:id="@+id/action_homeFragment_to_playerFragment"
+            app:destination="@id/playerFragment" />
+        <!-- Optional: open artist profile from home if you add a click -->
+        <action
+            android:id="@+id/action_homeFragment_to_artistProfileFragment"
+            app:destination="@id/artistProfileFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/uploadFragment"
+        android:name="com.puggables.musically.ui.upload.UploadFragment"
+        android:label="Upload"
+        tools:layout="@layout/fragment_upload" />
+
+    <!-- ===== Player screen ===== -->
+    <fragment
+        android:id="@+id/playerFragment"
+        android:name="com.puggables.musically.ui.player.PlayerFragment"
+        android:label="Now Playing"
+        tools:layout="@layout/fragment_player">
+        <!-- Safe Args: the whole Song (Parcelable) -->
+        <argument
+            android:name="song"
+            app:argType="com.puggables.musically.data.models.Song" />
+        <!-- Jump from player to artist profile when artist name is tapped -->
+        <action
+            android:id="@+id/action_playerFragment_to_artistProfileFragment"
+            app:destination="@id/artistProfileFragment" />
+    </fragment>
+
+    <!-- ===== Artist profile ===== -->
+    <fragment
+        android:id="@+id/artistProfileFragment"
+        android:name="com.puggables.musically.ui.artist.ArtistProfileFragment"
+        android:label="Artist"
+        tools:layout="@layout/fragment_artist_profile">
+        <!-- required artist id -->
+        <argument
+            android:name="artistId"
+            app:argType="integer" />
+    </fragment>
+
+    <!-- ===== Global action used by NavController.goHomeClearingBackStack() ===== -->
+    <action
+        android:id="@+id/action_global_homeFragment"
+        app:destination="@id/homeFragment" />
+
+</navigation>
