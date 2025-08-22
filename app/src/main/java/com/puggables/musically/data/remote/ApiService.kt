@@ -64,4 +64,7 @@ interface ApiService {
         @Part("title") title: RequestBody,
         @Part coverImage: MultipartBody.Part?
     ): Response<Album>
+
+    @DELETE("albums/{id}")
+    suspend fun deleteAlbum(@Path("id") id: Int): Response<Unit>
 }

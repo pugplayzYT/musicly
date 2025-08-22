@@ -6,12 +6,15 @@ import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.puggables.musically.R
 import com.puggables.musically.data.models.Album
 import com.puggables.musically.databinding.FragmentUploadBinding
@@ -33,9 +36,21 @@ class UploadFragment : Fragment(R.layout.fragment_upload) {
 
     private var selectedAudio: Uri? = null
     private var selectedImage: Uri? = null
+    private var newAlbumCover: Uri? = null
 
+    // This launcher is for the song's cover art
+    private val pickImage = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            selectedImage = uri
+            binding.imageNameText.text = "Image: ${FileUtils.getDisplayName(requireContext(), uri)}"
+        }
+    }
+
+    // This launcher is for the audio file
     private val pickAudio = registerForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.GetContent()
+        ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
             selectedAudio = uri
@@ -43,14 +58,6 @@ class UploadFragment : Fragment(R.layout.fragment_upload) {
         }
     }
 
-    private val pickImage = registerForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
-            selectedImage = uri
-            binding.imageNameText.text = "Image: ${FileUtils.getDisplayName(requireContext(), uri)}"
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -77,21 +84,44 @@ class UploadFragment : Fragment(R.layout.fragment_upload) {
     }
 
     private fun showCreateAlbumDialog() {
-        val editText = EditText(requireContext()).apply { hint = "Album Title" }
+        val dialogView = layoutInflater.inflate(R.layout.dialog_create_album, null)
+        val albumTitleEditText = dialogView.findViewById<EditText>(R.id.albumTitleEditText)
+        val albumCoverPreview = dialogView.findViewById<ImageView>(R.id.albumCoverPreview)
+
+        val pickAlbumCoverLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                newAlbumCover = uri
+                albumCoverPreview.load(uri) // Update the preview
+            }
+        }
+
+        albumCoverPreview.setOnClickListener {
+            pickAlbumCoverLauncher.launch("image/*")
+        }
+
         AlertDialog.Builder(requireContext())
             .setTitle("Create New Album")
-            .setView(editText)
+            .setView(dialogView)
             .setPositiveButton("Create") { _, _ ->
-                val title = editText.text.toString().trim()
+                val title = albumTitleEditText.text.toString().trim()
                 if (title.isNotEmpty()) {
-                    lifecycleScope.launch {
+                    lifecycleScope.launch(Dispatchers.IO) {
                         val titleRB = title.toRequestBody("text/plain".toMediaTypeOrNull())
-                        val response = RetrofitInstance.api.createAlbum(titleRB, null)
-                        if (response.isSuccessful) {
-                            Toast.makeText(requireContext(), "Album created", Toast.LENGTH_SHORT).show()
-                            viewModel.fetchMyAlbums()
-                        } else {
-                            Toast.makeText(requireContext(), "Failed to create album", Toast.LENGTH_SHORT).show()
+
+                        val imagePart: MultipartBody.Part? = newAlbumCover?.let { uri ->
+                            val imageFile = FileUtils.copyUriToTempFile(requireContext(), uri, ".png")
+                            val imageMime = FileUtils.getMime(requireContext(), uri) ?: "image/png"
+                            MultipartBody.Part.createFormData("cover_image", imageFile.name, imageFile.asRequestBody(imageMime.toMediaTypeOrNull()))
+                        }
+
+                        val response = RetrofitInstance.api.createAlbum(titleRB, imagePart)
+                        withContext(Dispatchers.Main) {
+                            if (response.isSuccessful) {
+                                Toast.makeText(requireContext(), "Album created", Toast.LENGTH_SHORT).show()
+                                viewModel.fetchMyAlbums()
+                            } else {
+                                Toast.makeText(requireContext(), "Failed to create album", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 }
@@ -99,6 +129,7 @@ class UploadFragment : Fragment(R.layout.fragment_upload) {
             .setNegativeButton("Cancel", null)
             .show()
     }
+
 
     private fun doUpload() {
         val title = binding.titleEditText.text?.toString()?.trim().orEmpty()
@@ -133,7 +164,7 @@ class UploadFragment : Fragment(R.layout.fragment_upload) {
                     val response = RetrofitInstance.api.uploadSong(titleRB, albumIdRB, audioPart, imagePart)
                     response.isSuccessful
                 } catch (e: Exception) {
-                    Log.e("UploadFragment", "Upload failed", e) // <-- IMPROVEMENT: Log the actual error
+                    Log.e("UploadFragment", "Upload failed", e)
                     false
                 }
             }

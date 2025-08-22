@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import com.puggables.musically.MainViewModel
 import com.puggables.musically.R
+import com.puggables.musically.data.models.Album
 import com.puggables.musically.data.models.Song
 import com.puggables.musically.data.remote.RetrofitInstance
 import com.puggables.musically.databinding.FragmentArtistProfileBinding
@@ -121,7 +123,8 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
                     albums = artist.albums,
                     onSongClicked = { song -> mainVM.playOrToggleSong(song, isNewSong = true) },
                     onArtistClicked = {},
-                    onSongLongClicked = { song -> showOwnerMenu(song) }
+                    onSongLongClicked = { song -> showOwnerMenu(song) },
+                    onAlbumLongClicked = { album -> showAlbumOwnerMenu(album)}
                 )
                 binding.albumsRecyclerView.apply {
                     adapter = albumAdapter
@@ -137,6 +140,21 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
             }
         }
     }
+
+    private fun showAlbumOwnerMenu(album: Album) {
+        val isOwner = album.artistId == com.puggables.musically.MusicallyApplication.sessionManager.getUserId()
+        if (!isOwner) return
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete Album")
+            .setMessage("Are you sure you want to delete '${album.title}'? This will also delete all songs within it.")
+            .setPositiveButton("Delete") { _, _ ->
+                doDeleteAlbum(album.id)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
 
     private fun showOwnerMenu(song: Song) {
         val isOwner = song.artistId == com.puggables.musically.MusicallyApplication.sessionManager.getUserId()
@@ -164,6 +182,20 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
                     loadArtist()
                 } else {
                     Toast.makeText(requireContext(), "Delete failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun doDeleteAlbum(albumId: Int) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val resp = RetrofitInstance.api.deleteAlbum(albumId)
+            withContext(Dispatchers.Main) {
+                if (resp.isSuccessful) {
+                    Toast.makeText(requireContext(), "Album Deleted", Toast.LENGTH_SHORT).show()
+                    loadArtist()
+                } else {
+                    Toast.makeText(requireContext(), "Failed to delete album", Toast.LENGTH_SHORT).show()
                 }
             }
         }
