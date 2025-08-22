@@ -8,6 +8,7 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
@@ -38,7 +39,19 @@ class UploadFragment : Fragment(R.layout.fragment_upload) {
     private var selectedImage: Uri? = null
     private var newAlbumCover: Uri? = null
 
-    // This launcher is for the song's cover art
+    // --- FIX IS HERE ---
+    // Moved the album cover launcher to be a class property
+    private lateinit var pickAlbumCoverLauncher: ActivityResultLauncher<String>
+
+    private val pickAudio = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            selectedAudio = uri
+            binding.audioNameText.text = "Audio: ${FileUtils.getDisplayName(requireContext(), uri)}"
+        }
+    }
+
     private val pickImage = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
@@ -48,13 +61,16 @@ class UploadFragment : Fragment(R.layout.fragment_upload) {
         }
     }
 
-    // This launcher is for the audio file
-    private val pickAudio = registerForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
-            selectedAudio = uri
-            binding.audioNameText.text = "Audio: ${FileUtils.getDisplayName(requireContext(), uri)}"
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Initialize the launcher here, before the fragment is fully created
+        pickAlbumCoverLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                newAlbumCover = uri
+                // Note: We can't update the dialog's view from here directly.
+                // We'll pass the uri to the dialog or have the dialog update itself.
+                // For simplicity, we'll just store the URI and load it when the dialog is shown.
+            }
         }
     }
 
@@ -88,16 +104,18 @@ class UploadFragment : Fragment(R.layout.fragment_upload) {
         val albumTitleEditText = dialogView.findViewById<EditText>(R.id.albumTitleEditText)
         val albumCoverPreview = dialogView.findViewById<ImageView>(R.id.albumCoverPreview)
 
-        val pickAlbumCoverLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        // Re-registering the launcher for every dialog shown
+        val dialogImagePicker = registerForActivityResult(ActivityResultContracts.GetContent()){ uri ->
             if (uri != null) {
                 newAlbumCover = uri
-                albumCoverPreview.load(uri) // Update the preview
+                albumCoverPreview.load(uri)
             }
         }
 
         albumCoverPreview.setOnClickListener {
-            pickAlbumCoverLauncher.launch("image/*")
+            dialogImagePicker.launch("image/*")
         }
+
 
         AlertDialog.Builder(requireContext())
             .setTitle("Create New Album")
@@ -119,8 +137,9 @@ class UploadFragment : Fragment(R.layout.fragment_upload) {
                             if (response.isSuccessful) {
                                 Toast.makeText(requireContext(), "Album created", Toast.LENGTH_SHORT).show()
                                 viewModel.fetchMyAlbums()
+                                newAlbumCover = null // Reset for next time
                             } else {
-                                Toast.makeText(requireContext(), "Failed to create album", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(requireContext(), "Failed to create album: ${response.errorBody()?.string()}", Toast.LENGTH_LONG).show()
                             }
                         }
                     }
