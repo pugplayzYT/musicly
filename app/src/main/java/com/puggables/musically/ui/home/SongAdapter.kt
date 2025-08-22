@@ -12,11 +12,12 @@ import com.puggables.musically.databinding.ItemSongBinding
 
 class SongAdapter(
     private val onSongClicked: (Song) -> Unit,
-    private val onArtistClicked: (Song) -> Unit // ADDED
+    private val onArtistClicked: (Song) -> Unit
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
     private val BASE_IMAGE_URL = "https://cents-mongolia-difficulties-mortgage.trycloudflare.com/static/images/"
 
+    // long-click listener (optional)
     private var onItemLongClick: ((Song) -> Unit)? = null
     fun setOnItemLongClickListener(cb: (Song) -> Unit) { onItemLongClick = cb }
 
@@ -43,7 +44,6 @@ class SongAdapter(
             songTitleTextView.text = song.title
             artistNameTextView.text = song.artist
 
-            // ADDED click listener for the artist's name
             artistNameTextView.setOnClickListener {
                 onArtistClicked(song)
             }
@@ -58,7 +58,7 @@ class SongAdapter(
             root.setOnClickListener { onSongClicked(song) }
             root.setOnLongClickListener {
                 onItemLongClick?.invoke(song)
-                onItemLongClick != null
+                onItemLongClick != null // true if handled
             }
         }
     }

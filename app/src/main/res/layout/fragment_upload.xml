@@ -18,23 +18,25 @@
             android:textColor="@android:color/white"
             android:textColorHint="#AAAAAA"/>
 
-        <EditText
-            android:id="@+id/albumEditText"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Album (default: Single)"
-            android:layout_marginTop="12dp"
-            android:textColor="@android:color/white"
-            android:textColorHint="#AAAAAA"/>
+            android:text="Album (Optional)"
+            android:textColor="#AAAAAA"
+            android:layout_marginTop="16dp"/>
 
-        <EditText
-            android:id="@+id/genresEditText"
+        <Spinner
+            android:id="@+id/albumSpinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Genres CSV (e.g. 1,2,4) - optional"
-            android:layout_marginTop="12dp"
-            android:textColor="@android:color/white"
-            android:textColorHint="#AAAAAA"/>
+            android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/createNewAlbumButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create New Album"
+            android:layout_gravity="end"/>
 
         <TextView
             android:id="@+id/audioNameText"
@@ -54,7 +56,7 @@
             android:id="@+id/imageNameText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Image: none"
+            android:text="Image: none (uses album art if available)"
             android:textColor="@android:color/white"
             android:layout_marginTop="16dp"/>
 

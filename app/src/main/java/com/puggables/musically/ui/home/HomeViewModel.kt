@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.puggables.musically.data.models.Song
-import com.puggables.musically.data.remote.RetrofitInstance // <-- This was missing
+import com.puggables.musically.data.remote.RetrofitInstance
 import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
@@ -20,11 +20,27 @@ class HomeViewModel : ViewModel() {
         fetchSongs()
     }
 
-    private fun fetchSongs() {
+    fun fetchSongs() {
         _isLoading.value = true
         viewModelScope.launch {
             try {
                 val response = RetrofitInstance.api.getAllSongs()
+                if (response.isSuccessful) {
+                    _songs.postValue(response.body())
+                }
+            } catch (e: Exception) {
+                // Handle error
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun searchSongs(query: String) {
+        _isLoading.value = true
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.searchSongs(query)
                 if (response.isSuccessful) {
                     _songs.postValue(response.body())
                 }
