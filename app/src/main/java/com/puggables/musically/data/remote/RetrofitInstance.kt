@@ -8,7 +8,11 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
 
-    private const val BASE_URL = "https://cents-mongolia-difficulties-mortgage.trycloudflare.com/"
+    private const val DEFAULT_BASE_URL = "https://cents-mongolia-difficulties-mortgage.trycloudflare.com/"
+
+    // Public property to get the current base URL
+    val currentBaseUrl: String
+        get() = MusicallyApplication.sessionManager.getBaseUrl() ?: DEFAULT_BASE_URL
 
     private val logging by lazy {
         HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
@@ -29,12 +33,21 @@ object RetrofitInstance {
             .build()
     }
 
-    val api: ApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
+    // This will now be a mutable property
+    var api: ApiService = createApi()
+        private set
+
+    private fun createApi(): ApiService {
+        return Retrofit.Builder()
+            .baseUrl(currentBaseUrl) // Use the public property here
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
+    }
+
+    // Call this function to re-initialize the API with the new URL
+    fun reinitializeApi() {
+        api = createApi()
     }
 }

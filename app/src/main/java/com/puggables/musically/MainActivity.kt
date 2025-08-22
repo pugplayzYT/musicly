@@ -8,10 +8,10 @@ import androidx.core.view.isVisible
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment // <-- THIS IMPORT WAS MISSING
-import androidx.navigation.ui.onNavDestinationSelected
+import androidx.navigation.fragment.NavHostFragment
 import coil.load
 import com.google.common.util.concurrent.MoreExecutors
+import com.puggables.musically.data.remote.RetrofitInstance
 import com.puggables.musically.databinding.ActivityMainBinding
 import com.puggables.musically.player.MusicService
 import com.puggables.musically.ui.player.ExpandedPlayerBottomSheet
@@ -21,8 +21,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val mainViewModel: MainViewModel by viewModels()
     private lateinit var navController: NavController
-
-    private val FALLBACK_BASE = "https://cents-mongolia-difficulties-mortgage.trycloudflare.com"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,12 +37,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             when (item.itemId) {
-                R.id.homeFragment -> {
-                    navController.navigate(R.id.homeFragment)
-                    true
-                }
-                R.id.uploadFragment -> {
-                    navController.navigate(R.id.uploadFragment)
+                R.id.homeFragment, R.id.uploadFragment, R.id.settingsFragment -> {
+                    navController.navigate(item.itemId)
                     true
                 }
                 R.id.profileMenuItem -> {
@@ -79,10 +73,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.miniPlayerPlayPause.setOnClickListener {
-            val willPlay = !(mainViewModel.isPlaying.value ?: false)
-            binding.miniPlayerPlayPause.setImageResource(
-                if (willPlay) R.drawable.ic_pause else R.drawable.ic_play
-            )
             mainViewModel.currentPlayingSong.value?.let { song ->
                 mainViewModel.playOrToggleSong(song)
             }
@@ -99,7 +89,8 @@ class MainActivity : AppCompatActivity() {
             binding.miniPlayerSongTitle.text = song.title
             binding.miniPlayerSongArtist.text = song.artist
 
-            val coverUrl = song.imageUrl ?: "$FALLBACK_BASE/static/images/${song.image}"
+            // Fixed: Use the new public property to build the image URL
+            val coverUrl = song.imageUrl ?: "${RetrofitInstance.currentBaseUrl}static/images/${song.image}"
             binding.miniPlayerCover.load(coverUrl) {
                 crossfade(true)
                 placeholder(R.drawable.ic_music_note)

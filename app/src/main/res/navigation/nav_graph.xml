@@ -12,12 +12,10 @@
         tools:layout="@layout/fragment_splash">
         <action
             android:id="@+id/action_splashFragment_to_loginFragment"
-            app:destination="@id/loginFragment"
-            app:popUpToInclusive="false" />
+            app:destination="@id/loginFragment" />
         <action
             android:id="@+id/action_splashFragment_to_homeFragment"
-            app:destination="@id/homeFragment"
-            app:popUpToInclusive="false" />
+            app:destination="@id/homeFragment" />
     </fragment>
 
     <fragment
@@ -34,20 +32,13 @@
         android:id="@+id/registerFragment"
         android:name="com.puggables.musically.ui.auth.RegisterFragment"
         android:label="Register"
-        tools:layout="@layout/fragment_register">
-        <action
-            android:id="@+id/action_registerFragment_to_loginFragment"
-            app:destination="@id/loginFragment" />
-    </fragment>
+        tools:layout="@layout/fragment_register"/>
 
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.puggables.musically.ui.home.HomeFragment"
         android:label="Home"
         tools:layout="@layout/fragment_home">
-        <action
-            android:id="@+id/action_homeFragment_to_playerFragment"
-            app:destination="@id/playerFragment" />
         <action
             android:id="@+id/action_homeFragment_to_artistProfileFragment"
             app:destination="@id/artistProfileFragment" />
@@ -60,19 +51,6 @@
         tools:layout="@layout/fragment_upload" />
 
     <fragment
-        android:id="@+id/playerFragment"
-        android:name="com.puggables.musically.ui.player.PlayerFragment"
-        android:label="Now Playing"
-        tools:layout="@layout/fragment_player">
-        <argument
-            android:name="song"
-            app:argType="com.puggables.musically.data.models.Song" />
-        <action
-            android:id="@+id/action_playerFragment_to_artistProfileFragment"
-            app:destination="@id/artistProfileFragment" />
-    </fragment>
-
-    <fragment
         android:id="@+id/artistProfileFragment"
         android:name="com.puggables.musically.ui.artist.ArtistProfileFragment"
         android:label="Artist"
@@ -82,10 +60,27 @@
             app:argType="integer" />
     </fragment>
 
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.puggables.musically.ui.settings.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
+
+    <!-- This was missing! Adding it back so the app knows about the player screen -->
+    <fragment
+        android:id="@+id/playerFragment"
+        android:name="com.puggables.musically.ui.player.PlayerFragment"
+        android:label="Now Playing"
+        tools:layout="@layout/fragment_player">
+        <action
+            android:id="@+id/action_playerFragment_to_artistProfileFragment"
+            app:destination="@id/artistProfileFragment" />
+    </fragment>
+
+    <!-- Global Actions -->
     <action
         android:id="@+id/action_global_homeFragment"
         app:destination="@id/homeFragment" />
-
     <action
         android:id="@+id/action_global_artistProfileFragment"
         app:destination="@id/artistProfileFragment" />

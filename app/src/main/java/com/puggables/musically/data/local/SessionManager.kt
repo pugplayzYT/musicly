@@ -10,6 +10,7 @@ class SessionManager(context: Context) {
         const val USER_ID = "user_id"
         const val USERNAME = "username"
         const val TOKEN = "token"
+        const val BASE_URL = "base_url" // New key for the server URL
     }
 
     fun saveAuth(userId: Int, username: String, token: String) {
@@ -20,13 +21,11 @@ class SessionManager(context: Context) {
             .apply()
     }
 
-    fun saveUser(userId: Int, username: String) {
-        // kept for backwards-compat; prefer saveAuth
-        prefs.edit()
-            .putInt(USER_ID, userId)
-            .putString(USERNAME, username)
-            .apply()
+    fun saveBaseUrl(url: String) {
+        prefs.edit().putString(BASE_URL, url).apply()
     }
+
+    fun getBaseUrl(): String? = prefs.getString(BASE_URL, null)
 
     fun getUserId(): Int = prefs.getInt(USER_ID, -1)
     fun getUsername(): String? = prefs.getString(USERNAME, null)
@@ -34,6 +33,11 @@ class SessionManager(context: Context) {
     fun isLoggedIn(): Boolean = getUserId() != -1
 
     fun logout() {
+        // Keep the custom URL when logging out
+        val customUrl = getBaseUrl()
         prefs.edit().clear().apply()
+        if (customUrl != null) {
+            saveBaseUrl(customUrl)
+        }
     }
 }

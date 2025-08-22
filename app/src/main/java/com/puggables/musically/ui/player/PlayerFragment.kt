@@ -8,6 +8,7 @@ import androidx.navigation.fragment.findNavController
 import coil.load
 import com.puggables.musically.MainViewModel
 import com.puggables.musically.R
+import com.puggables.musically.data.remote.RetrofitInstance
 import com.puggables.musically.databinding.FragmentPlayerBinding
 
 class PlayerFragment : Fragment(R.layout.fragment_player) {
@@ -15,7 +16,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private var _binding: FragmentPlayerBinding? = null
     private val binding get() = _binding!!
     private val mainViewModel: MainViewModel by activityViewModels()
-    private val BASE = "https://cents-mongolia-difficulties-mortgage.trycloudflare.com"
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -27,10 +27,14 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             if (song != null) {
                 binding.songTitleTextView.text = song.title
                 binding.artistNameTextView.text = song.artist
-                binding.albumArtImageView.load(song.imageUrl ?: "$BASE/static/images/${song.image}")
+                // Use the dynamic base URL here too
+                val coverUrl = song.imageUrl ?: "${RetrofitInstance.currentBaseUrl}static/images/${song.image}"
+                binding.albumArtImageView.load(coverUrl)
+
                 // tap to profile
                 binding.artistNameTextView.setOnClickListener {
                     val artistId = song.artistId ?: return@setOnClickListener
+                    // This will now resolve correctly because the nav graph is fixed
                     val action = PlayerFragmentDirections.actionPlayerFragmentToArtistProfileFragment(artistId)
                     findNavController().navigate(action)
                 }
