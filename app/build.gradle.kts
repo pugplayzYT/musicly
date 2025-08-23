@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
     id("androidx.navigation.safeargs.kotlin")
+    id("com.google.devtools.ksp") // ADD THIS LINE
+
 }
 
 android {
@@ -70,4 +72,20 @@ dependencies {
     implementation("androidx.media3:media3-session:1.2.0")
 
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+
+    // QR Code Scanner (CameraX and ML Kit)
+    val camerax_version = "1.3.1"
+    implementation("androidx.camera:camera-core:$camerax_version")
+    implementation("androidx.camera:camera-camera2:$camerax_version")
+    implementation("androidx.camera:camera-lifecycle:$camerax_version")
+    implementation("androidx.camera:camera-view:$camerax_version")
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+
+    // QR Code Generator
+    implementation("com.github.kenglxn.qrgen:android:2.6.0")
+
 }

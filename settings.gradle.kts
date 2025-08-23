@@ -16,9 +16,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // ADD THIS LINE - This tells Gradle to check JitPack for libraries
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
 rootProject.name = "musically"
 include(":app")
- 

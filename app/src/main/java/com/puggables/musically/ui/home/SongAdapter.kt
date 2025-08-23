@@ -8,16 +8,15 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.puggables.musically.R
 import com.puggables.musically.data.models.Song
+import com.puggables.musically.data.remote.RetrofitInstance
 import com.puggables.musically.databinding.ItemSongBinding
 
 class SongAdapter(
     private val onSongClicked: (Song) -> Unit,
-    private val onArtistClicked: (Song) -> Unit
+    private val onArtistClicked: (Song) -> Unit,
+    private val onDownloadClicked: (Song) -> Unit
 ) : RecyclerView.Adapter<SongAdapter.SongViewHolder>() {
 
-    private val BASE_IMAGE_URL = "https://cents-mongolia-difficulties-mortgage.trycloudflare.com/static/images/"
-
-    // long-click listener (optional)
     private var onItemLongClick: ((Song) -> Unit)? = null
     fun setOnItemLongClickListener(cb: (Song) -> Unit) { onItemLongClick = cb }
 
@@ -43,22 +42,22 @@ class SongAdapter(
         holder.binding.apply {
             songTitleTextView.text = song.title
             artistNameTextView.text = song.artist
+            artistNameTextView.setOnClickListener { onArtistClicked(song) }
 
-            artistNameTextView.setOnClickListener {
-                onArtistClicked(song)
-            }
-
-            val imageUrl = song.imageUrl ?: (BASE_IMAGE_URL + song.image)
+            val baseUrl = RetrofitInstance.currentBaseUrl
+            val imageUrl = song.imageUrl ?: ("${baseUrl}static/images/" + song.image)
             songCoverImageView.load(imageUrl) {
                 crossfade(true)
                 placeholder(R.drawable.ic_music_note)
                 error(R.drawable.ic_music_note)
             }
 
+            downloadButton.setOnClickListener { onDownloadClicked(song) }
+
             root.setOnClickListener { onSongClicked(song) }
             root.setOnLongClickListener {
                 onItemLongClick?.invoke(song)
-                onItemLongClick != null // true if handled
+                onItemLongClick != null
             }
         }
     }

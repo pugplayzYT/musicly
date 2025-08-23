@@ -12,6 +12,7 @@ data class Song(
     val album: String,
     val image: String,
     val filepath: String,
+    val duration: Float, // ADD THIS LINE
     @SerializedName("artist_id") val artistId: Int? = null,
     @SerializedName("image_url") val imageUrl: String? = null,
     @SerializedName("stream_url") val streamUrl: String? = null

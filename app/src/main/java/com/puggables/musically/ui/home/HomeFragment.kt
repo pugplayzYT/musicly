@@ -1,7 +1,9 @@
 package com.puggables.musically.ui.home
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -11,8 +13,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.puggables.musically.MainViewModel
+import com.puggables.musically.MusicallyApplication
 import com.puggables.musically.R
+import com.puggables.musically.data.models.Song
 import com.puggables.musically.databinding.FragmentHomeBinding
+import com.puggables.musically.downloading.DownloadService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,10 +61,37 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     val action = HomeFragmentDirections.actionHomeFragmentToArtistProfileFragment(artistId)
                     findNavController().navigate(action)
                 }
+            },
+            onDownloadClicked = { song ->
+                handleDownloadClick(song)
             }
         )
         adapter = songAdapter
         layoutManager = LinearLayoutManager(requireContext())
+    }
+
+    private fun handleDownloadClick(song: Song) {
+        if (!MusicallyApplication.sessionManager.isPro()) {
+            Toast.makeText(requireContext(), "Musically Pro is required to download songs.", Toast.LENGTH_LONG).show()
+            findNavController().navigate(R.id.settingsFragment)
+            return
+        }
+
+        val intent = Intent(requireContext(), DownloadService::class.java).apply {
+            putExtra("songId", song.id)
+            putExtra("title", song.title)
+            putExtra("artist", song.artist)
+            putExtra("album", song.album)
+            putExtra("duration", song.duration)
+            putExtra("audioUrl", song.streamUrl)
+            putExtra("imageUrl", song.imageUrl)
+            // Note: A better way to get the switch state would be from a shared ViewModel or SessionManager
+            // For now, we'll assume a default.
+            val downloadImages = true // You can connect this to the switch in settings later
+            putExtra("downloadImages", downloadImages)
+        }
+        requireContext().startService(intent)
+        Toast.makeText(requireContext(), "Starting download for ${song.title}", Toast.LENGTH_SHORT).show()
     }
 
     private fun observeViewModels() {

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.PlaybackParameters
 import com.puggables.musically.data.models.Song
 
 class MainViewModel : ViewModel() {
@@ -17,12 +18,17 @@ class MainViewModel : ViewModel() {
     private val _isPlaying = MutableLiveData<Boolean>()
     val isPlaying: LiveData<Boolean> = _isPlaying
 
+    private val _playbackSpeed = MutableLiveData(1.0f)
+    val playbackSpeed: LiveData<Float> = _playbackSpeed
+
     var mediaController: Player? = null
         set(value) {
             field?.removeListener(playerListener)
             field = value
             value?.addListener(playerListener)
             _isPlaying.postValue(value?.isPlaying == true)
+            // When the player is ready, set the default speed
+            applyDefaultSpeed()
         }
 
     private val playerListener = object : Player.Listener {
@@ -32,19 +38,27 @@ class MainViewModel : ViewModel() {
         override fun onEvents(player: Player, events: Player.Events) {
             _isPlaying.postValue(player.isPlaying)
         }
+        override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+            super.onPlaybackParametersChanged(playbackParameters)
+            _playbackSpeed.postValue(playbackParameters.speed)
+        }
     }
-
-    private val BASE = "https://cents-mongolia-difficulties-mortgage.trycloudflare.com"
 
     fun playOrToggleSong(song: Song, isNewSong: Boolean = false) {
         val ctrl = mediaController ?: return
-        val stream = (song.streamUrl ?: "$BASE/static/music/${song.filepath}").replace(" ", "%20")
-        val artUrl = song.imageUrl ?: "$BASE/static/images/${song.image}"
+        val baseUrl = com.puggables.musically.data.remote.RetrofitInstance.currentBaseUrl
+        val stream = (song.streamUrl ?: "${baseUrl}static/music/${song.filepath}").replace(" ", "%20")
+        val artUrl = song.imageUrl ?: "${baseUrl}static/images/${song.image}"
 
         val isSame = ctrl.currentMediaItem?.mediaId == stream
         if (isSame && !isNewSong) {
             if (ctrl.isPlaying) ctrl.pause() else ctrl.play()
             return
+        }
+
+        // When a new song starts, apply the default speed
+        if (isNewSong) {
+            applyDefaultSpeed()
         }
 
         val meta = MediaMetadata.Builder()
@@ -64,6 +78,19 @@ class MainViewModel : ViewModel() {
         ctrl.prepare()
         ctrl.play()
         _currentPlayingSong.postValue(song)
+    }
+
+    fun setPlaybackSpeed(speed: Float) {
+        val clampedSpeed = speed.coerceIn(1.0f, 3.5f)
+        mediaController?.let { player ->
+            player.setPlaybackSpeed(clampedSpeed)
+        }
+    }
+
+    // New private function to apply the saved speed
+    private fun applyDefaultSpeed() {
+        val defaultSpeed = MusicallyApplication.sessionManager.getDefaultSpeed()
+        setPlaybackSpeed(defaultSpeed)
     }
 
     override fun onCleared() {

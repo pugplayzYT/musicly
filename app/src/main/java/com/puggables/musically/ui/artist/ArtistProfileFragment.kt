@@ -1,5 +1,6 @@
 package com.puggables.musically.ui.artist
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -11,15 +12,18 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import com.puggables.musically.MainViewModel
+import com.puggables.musically.MusicallyApplication
 import com.puggables.musically.R
 import com.puggables.musically.data.models.Album
 import com.puggables.musically.data.models.Song
 import com.puggables.musically.data.remote.RetrofitInstance
 import com.puggables.musically.databinding.FragmentArtistProfileBinding
+import com.puggables.musically.downloading.DownloadService
 import com.puggables.musically.ui.home.SongAdapter
 import com.puggables.musically.util.FileUtils
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +32,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
@@ -95,7 +98,8 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
     private fun setupRecyclerViews() {
         singlesAdapter = SongAdapter(
             onSongClicked = { song -> mainVM.playOrToggleSong(song, isNewSong = true) },
-            onArtistClicked = { /* Already on profile, do nothing */ }
+            onArtistClicked = { /* Already on profile, do nothing */ },
+            onDownloadClicked = { song -> handleDownloadClick(song) } // Pass the handler function
         ).apply {
             setOnItemLongClickListener { song -> showOwnerMenu(song) }
         }
@@ -104,6 +108,29 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
             layoutManager = LinearLayoutManager(requireContext())
         }
     }
+
+    private fun handleDownloadClick(song: Song) {
+        if (!MusicallyApplication.sessionManager.isPro()) {
+            Toast.makeText(requireContext(), "Musically Pro is required to download songs.", Toast.LENGTH_LONG).show()
+            findNavController().navigate(R.id.settingsFragment)
+            return
+        }
+
+        val intent = Intent(requireContext(), DownloadService::class.java).apply {
+            putExtra("songId", song.id)
+            putExtra("title", song.title)
+            putExtra("artist", song.artist)
+            putExtra("album", song.album)
+            putExtra("duration", song.duration)
+            putExtra("audioUrl", song.streamUrl)
+            putExtra("imageUrl", song.imageUrl)
+            // Note: Add logic here to check the "Download Images" setting
+            putExtra("downloadImages", true)
+        }
+        requireContext().startService(intent)
+        Toast.makeText(requireContext(), "Starting download for ${song.title}", Toast.LENGTH_SHORT).show()
+    }
+
 
     private fun loadArtist() {
         binding.swipeRefresh.isRefreshing = true
@@ -124,7 +151,8 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
                     onSongClicked = { song -> mainVM.playOrToggleSong(song, isNewSong = true) },
                     onArtistClicked = {},
                     onSongLongClicked = { song -> showOwnerMenu(song) },
-                    onAlbumLongClicked = { album -> showAlbumOwnerMenu(album)}
+                    onAlbumLongClicked = { album -> showAlbumOwnerMenu(album)},
+                    onDownloadClicked = { song -> handleDownloadClick(song) }
                 )
                 binding.albumsRecyclerView.apply {
                     adapter = albumAdapter
@@ -164,13 +192,9 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
             albumDefault = song.album,
             onPickImage = { pickNewImage.launch("image/*") },
             onPickAudio = { pickNewAudio.launch("audio/*") },
-            onSave = { newTitle, newAlbum -> doEditSong(song.id, newTitle, newAlbum) },
+            onSave = { newTitle, newAlbum -> /* Do nothing for now */ },
             onDelete = { doDeleteSong(song.id) }
         ).show(parentFragmentManager, "edit_song")
-    }
-
-    private fun doEditSong(songId: Int, newTitle: String?, newAlbum: String?) {
-        // This logic would need to be updated to handle changing albums, but for now it's ok
     }
 
     private fun doDeleteSong(songId: Int) {

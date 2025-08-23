@@ -23,8 +23,8 @@ class AuthViewModel : ViewModel() {
                 val response = RetrofitInstance.api.login(mapOf("username" to username, "password" to password))
                 if (response.isSuccessful && response.body() != null) {
                     val user = response.body()!!
-                    // CORRECTED: Call saveAuth to store the token
-                    MusicallyApplication.sessionManager.saveAuth(user.user_id, user.username, user.token)
+                    // THIS IS THE FIX: We now pass the user's 'is_pro' status
+                    MusicallyApplication.sessionManager.saveAuth(user.user_id, user.username, user.token, user.is_pro)
                     _authResult.postValue(true)
                 } else {
                     _authResult.postValue(false)

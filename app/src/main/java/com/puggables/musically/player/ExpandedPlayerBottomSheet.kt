@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.SeekBar
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -16,6 +17,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.puggables.musically.MainViewModel
 import com.puggables.musically.NavGraphDirections
 import com.puggables.musically.R
+import com.puggables.musically.data.remote.RetrofitInstance
 import com.puggables.musically.databinding.BottomsheetExpandedPlayerBinding
 import androidx.media3.common.C
 import coil.load
@@ -28,16 +30,14 @@ class ExpandedPlayerBottomSheet : BottomSheetDialogFragment() {
     private val mainViewModel: MainViewModel by activityViewModels()
 
     private val handler = Handler(Looper.getMainLooper())
-    private var isUserSeeking = false // Flag to check if user is dragging the seekbar
+    private var isUserSeeking = false
 
     private val progressRunnable = object : Runnable {
         override fun run() {
             val binding = _binding ?: return
             val player = mainViewModel.mediaController ?: return
-
             val dur = if (player.duration == C.TIME_UNSET) 0L else max(0L, player.duration)
             val pos = max(0L, player.currentPosition)
-
             if (dur > 0) {
                 binding.positionSeekBar.max = dur.toInt()
                 if (!isUserSeeking) {
@@ -45,13 +45,7 @@ class ExpandedPlayerBottomSheet : BottomSheetDialogFragment() {
                 }
                 binding.currentTimeText.text = format(pos)
                 binding.timeLeftText.text = "-${format(max(0L, dur - pos))}"
-            } else {
-                binding.positionSeekBar.max = 1
-                binding.positionSeekBar.progress = 0
-                binding.currentTimeText.text = "0:00"
-                binding.timeLeftText.text = "-0:00"
             }
-
             if (_binding != null && isAdded && dialog?.isShowing == true) {
                 handler.postDelayed(this, 500)
             }
@@ -66,19 +60,15 @@ class ExpandedPlayerBottomSheet : BottomSheetDialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // This part still needs the Material library because BottomSheetDialogFragment itself is a Material component.
-        // But we have removed the Slider.
         dialog?.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)?.let {
             val behavior = BottomSheetBehavior.from(it)
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
-            // ... (rest of the behavior setup is the same)
         }
 
         mainViewModel.currentPlayingSong.observe(viewLifecycleOwner) { song ->
             if (song != null) {
                 b.titleText.text = song.title
                 b.artistText.text = song.artist
-
                 b.artistText.setOnClickListener {
                     song.artistId?.let { artistId ->
                         (activity?.supportFragmentManager?.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment)?.navController?.let { navController ->
@@ -88,8 +78,8 @@ class ExpandedPlayerBottomSheet : BottomSheetDialogFragment() {
                         }
                     }
                 }
-
-                val coverUrl = song.imageUrl ?: "https://cents-mongolia-difficulties-mortgage.trycloudflare.com/static/images/${song.image}"
+                val baseUrl = RetrofitInstance.currentBaseUrl
+                val coverUrl = song.imageUrl ?: "${baseUrl}static/images/${song.image}"
                 b.coverImage.load(coverUrl) {
                     crossfade(true)
                     placeholder(R.drawable.ic_music_note)
@@ -106,25 +96,37 @@ class ExpandedPlayerBottomSheet : BottomSheetDialogFragment() {
             mainViewModel.currentPlayingSong.value?.let { song -> mainViewModel.playOrToggleSong(song) }
         }
 
-        // Setup listener for the new SeekBar
         b.positionSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    mainViewModel.mediaController?.seekTo(progress.toLong())
-                }
+                if (fromUser) mainViewModel.mediaController?.seekTo(progress.toLong())
             }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                isUserSeeking = true
-            }
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                isUserSeeking = false
-            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) { isUserSeeking = true }
+            override fun onStopTrackingTouch(seekBar: SeekBar?) { isUserSeeking = false }
         })
+
+        mainViewModel.playbackSpeed.observe(viewLifecycleOwner) { speed ->
+            b.speedButton.text = "${speed}x"
+        }
+
+        b.speedButton.setOnClickListener {
+            val speedOptions = arrayOf("1.0x", "1.25x", "1.5x", "2.0x", "3.5x")
+            val speedValues = floatArrayOf(1.0f, 1.25f, 1.5f, 2.0f, 3.5f)
+            val currentSpeed = mainViewModel.playbackSpeed.value ?: 1.0f
+            val checkedItem = speedValues.indexOfFirst { it == currentSpeed }.coerceAtLeast(0)
+
+            AlertDialog.Builder(requireContext())
+                .setTitle("Select Playback Speed")
+                .setSingleChoiceItems(speedOptions, checkedItem) { dialog, which ->
+                    mainViewModel.setPlaybackSpeed(speedValues[which])
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
 
         handler.post(progressRunnable)
     }
 
-    // ... (rest of the file: onStart, onDismiss, onDestroyView, cleanup, format) is the same ...
     override fun onStart() {
         super.onStart()
         if (_binding != null) handler.post(progressRunnable)

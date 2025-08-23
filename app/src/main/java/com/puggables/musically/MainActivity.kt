@@ -2,6 +2,7 @@ package com.puggables.musically
 
 import android.content.ComponentName
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
@@ -21,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val mainViewModel: MainViewModel by viewModels()
     private lateinit var navController: NavController
+    private var isOffline = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +39,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             when (item.itemId) {
-                R.id.homeFragment, R.id.uploadFragment, R.id.settingsFragment -> {
+                R.id.homeFragment, R.id.uploadFragment, R.id.settingsFragment, R.id.downloadsFragment -> {
                     navController.navigate(item.itemId)
                     true
                 }
@@ -53,6 +55,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Simple toggle for offline mode simulation. Long-press the bottom nav bar.
+        binding.bottomNavigation.setOnLongClickListener {
+            isOffline = !isOffline
+            binding.bottomNavigation.menu.findItem(R.id.downloadsFragment).isVisible = isOffline
+            Toast.makeText(this, if (isOffline) "Offline Mode On" else "Online Mode On", Toast.LENGTH_SHORT).show()
+            true
+        }
+
+
         navController.addOnDestinationChangedListener { _, dest, _ ->
             val authScreens = setOf(R.id.splashFragment, R.id.loginFragment, R.id.registerFragment)
             val isAuth = dest.id in authScreens
@@ -66,7 +77,6 @@ class MainActivity : AppCompatActivity() {
                 binding.bottomNavigation.menu.findItem(R.id.profileMenuItem).isChecked = true
             }
         }
-
 
         binding.miniPlayer.setOnClickListener {
             ExpandedPlayerBottomSheet().show(supportFragmentManager, "expanded_player")
@@ -89,7 +99,6 @@ class MainActivity : AppCompatActivity() {
             binding.miniPlayerSongTitle.text = song.title
             binding.miniPlayerSongArtist.text = song.artist
 
-            // Fixed: Use the new public property to build the image URL
             val coverUrl = song.imageUrl ?: "${RetrofitInstance.currentBaseUrl}static/images/${song.image}"
             binding.miniPlayerCover.load(coverUrl) {
                 crossfade(true)

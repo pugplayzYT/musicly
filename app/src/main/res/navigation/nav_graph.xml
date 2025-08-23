@@ -84,5 +84,20 @@
     <action
         android:id="@+id/action_global_artistProfileFragment"
         app:destination="@id/artistProfileFragment" />
+    <fragment
+        android:id="@+id/downloadsFragment"
+        android:name="com.puggables.musically.ui.downloads.DownloadsFragment"
+        android:label="Downloads"
+        tools:layout="@layout/fragment_downloads" />
+
+    <fragment
+        android:id="@+id/qrScannerFragment"
+        android:name="com.puggables.musically.ui.pro.QrScannerFragment"
+        android:label="Scan QR Code"
+        tools:layout="@layout/fragment_qr_scanner" />
+
+    <action
+        android:id="@+id/action_global_qrScannerFragment"
+        app:destination="@id/qrScannerFragment" />
 
 </navigation>
