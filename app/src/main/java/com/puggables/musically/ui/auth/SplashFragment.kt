@@ -1,5 +1,3 @@
-// In pugplayzyt/musicly/musicly-b0a4421341799e1dd9ed032a85c388a3db9c0c20/app/src/main/java/com/puggables/musically/ui/auth/SplashFragment.kt
-
 package com.puggables.musically.ui.auth
 
 import android.app.AlertDialog

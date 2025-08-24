@@ -8,12 +8,14 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import net.glxn.qrgen.android.QRCode
 import com.puggables.musically.R
 import com.puggables.musically.data.local.SessionManager
 import com.puggables.musically.data.remote.RetrofitInstance
 import com.puggables.musically.databinding.FragmentSettingsBinding
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import net.glxn.qrgen.android.QRCode
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
@@ -68,7 +70,46 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             setupDefaultSpeedSpinner()
             setupProSection()
         }
+
+        setupVersionInfo()
     }
+
+    private fun setupVersionInfo() {
+        // Display App Version
+        try {
+            val packageInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+            val versionName = packageInfo.versionName
+            val versionCode = packageInfo.versionCode
+            binding.appVersionText.text = "App Version: $versionName ($versionCode)"
+        } catch (e: Exception) {
+            binding.appVersionText.text = "App Version: N/A"
+        }
+
+        // Fetch and Display Server Version
+        binding.serverVersionText.text = "Server Version: Loading..."
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitInstance.api.getVersionInfo()
+                if (response.isSuccessful) {
+                    val serverInfo = response.body()
+                    val serverVersionName = serverInfo?.get("latest_version_name") as? String ?: "N/A"
+                    val serverVersionCode = (serverInfo?.get("latest_version_code") as? Double)?.toInt() ?: "N/A"
+                    withContext(Dispatchers.Main) {
+                        binding.serverVersionText.text = "Server Version: $serverVersionName ($serverVersionCode)"
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        binding.serverVersionText.text = "Server Version: Failed to load"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    binding.serverVersionText.text = "Server Version: N/A"
+                }
+            }
+        }
+    }
+
 
     private fun setupDefaultSpeedSpinner() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, speedOptions)

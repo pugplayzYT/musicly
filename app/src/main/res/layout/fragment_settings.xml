@@ -38,7 +38,6 @@
             android:layout_marginTop="16dp"
             android:text="Save and Apply"/>
 
-        <!-- This whole section will be hidden if the user is not logged in -->
         <LinearLayout
             android:id="@+id/loggedInSettings"
             android:layout_width="match_parent"
@@ -111,6 +110,30 @@
                 android:layout_marginTop="16dp"
                 tools:ignore="UseSwitchCompatOrMaterialXml" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#444444"
+            android:layout_marginTop="32dp"/>
+
+        <TextView
+            android:id="@+id/appVersionText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            tools:text="App Version: 1.0 (15)" />
+
+        <TextView
+            android:id="@+id/serverVersionText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            tools:text="Server Version: 1.0 (15)" />
 
     </LinearLayout>
 </ScrollView>
