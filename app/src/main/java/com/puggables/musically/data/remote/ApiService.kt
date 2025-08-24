@@ -1,3 +1,5 @@
+// In pugplayzyt/musicly/musicly-b0a4421341799e1dd9ed032a85c388a3db9c0c20/app/src/main/java/com/puggables/musically/data/remote/ApiService.kt
+
 package com.puggables.musically.data.remote
 
 import com.puggables.musically.data.models.Album
@@ -11,7 +13,7 @@ import retrofit2.http.*
 
 interface ApiService {
 
-    // ... (Auth, Songs, Artists & Albums routes are the same)
+    // ... (All your existing routes like login, register, etc.)
     @POST("register")
     suspend fun register(@Body params: Map<String, String>): Response<Unit>
     @POST("login")
@@ -40,10 +42,14 @@ interface ApiService {
     @POST("api/update-url")
     suspend fun updateServerUrl(@Body params: Map<String, String>): Response<Unit>
 
-    // --- ADD THESE NEW PRO ROUTES ---
+    // --- PRO ROUTES ---
     @POST("pro/generate-qr-token")
     suspend fun generateProQrToken(): Response<Map<String, String>>
 
     @POST("pro/activate")
     suspend fun activatePro(@Body params: Map<String, String>): Response<Map<String, String>>
+
+    // --- THIS IS THE MISSING FUNCTION ---
+    @GET("version")
+    suspend fun getVersionInfo(): Response<Map<String, Any>>
 }
