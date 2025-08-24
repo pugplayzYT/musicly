@@ -8,6 +8,18 @@
     android:padding="24dp"
     tools:context=".ui.auth.LoginFragment">
 
+    <ImageView
+        android:id="@+id/settingsButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_settings"
+        app:tint="@android:color/white"
+        android:padding="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="Settings" />
+
     <TextView
         android:id="@+id/loginTitle"
         android:layout_width="wrap_content"
@@ -33,7 +45,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/loginTitle"
-        app:layout_constraintBottom_toTopOf="@id/passwordEditText"/>
+        app:layout_constraintBottom_toTopOf="@id/passwordEditText"
+        android:autofillHints="username"
+        android:inputType="text" />
 
     <EditText
         android:id="@+id/passwordEditText"
@@ -47,7 +61,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/usernameEditText"
-        app:layout_constraintBottom_toTopOf="@id/loginButton"/>
+        app:layout_constraintBottom_toTopOf="@id/loginButton"
+        android:autofillHints="password" />
 
     <Button
         android:id="@+id/loginButton"

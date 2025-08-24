@@ -12,18 +12,22 @@ class SessionManager(context: Context) {
         const val TOKEN = "token"
         const val BASE_URL = "base_url"
         const val DEFAULT_SPEED = "default_speed"
-        const val IS_PRO = "is_pro" // New key for Pro status
+        const val IS_PRO = "is_pro"
+        const val IS_ADMIN = "is_admin" // New key for Admin status
     }
 
-    // Update saveAuth to include isPro
-    fun saveAuth(userId: Int, username: String, token: String, isPro: Boolean) {
+    // Update saveAuth to include isAdmin
+    fun saveAuth(userId: Int, username: String, token: String, isPro: Boolean, isAdmin: Boolean) {
         prefs.edit()
             .putInt(USER_ID, userId)
             .putString(USERNAME, username)
             .putString(TOKEN, token)
-            .putBoolean(IS_PRO, isPro) // Save the pro status
+            .putBoolean(IS_PRO, isPro)
+            .putBoolean(IS_ADMIN, isAdmin) // Save the admin status
             .apply()
     }
+
+    fun isAdmin(): Boolean = prefs.getBoolean(IS_ADMIN, false) // New function to check Admin status
 
     fun saveBaseUrl(url: String) {
         prefs.edit().putString(BASE_URL, url).apply()

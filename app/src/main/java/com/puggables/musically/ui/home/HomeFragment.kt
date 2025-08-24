@@ -53,6 +53,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun setupRecyclerView() = binding.songsRecyclerView.apply {
         songAdapter = SongAdapter(
+            viewLifecycleOwner.lifecycleScope, // Add this
             onSongClicked = { song ->
                 mainViewModel.playOrToggleSong(song, isNewSong = true)
             },

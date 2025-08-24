@@ -36,7 +36,7 @@ class DownloadService : Service() {
         val imageUrl = intent?.getStringExtra("imageUrl")
         val downloadImages = intent?.getBooleanExtra("downloadImages", false) ?: false
 
-        if (audioUrl != null) {
+        if (audioUrl != null && songId != -1) {
             scope.launch {
                 downloadSong(songId, title, artist, album, duration, audioUrl, imageUrl, downloadImages, startId)
             }
@@ -49,23 +49,30 @@ class DownloadService : Service() {
         songId: Int, title: String, artist: String, album: String, duration: Float,
         audioUrl: String, imageUrl: String?, downloadImages: Boolean, notificationId: Int
     ) {
+        DownloadTracker.updateStatus(songId, DownloadStatus.Downloading(0))
+
         val notification = NotificationCompat.Builder(this, "download_channel")
             .setContentTitle("Downloading: $title")
             .setContentText("Download in progress...")
             .setSmallIcon(R.drawable.ic_download)
             .setOngoing(true)
-            .setProgress(100, 0, true)
+            .setProgress(100, 0, false) // Set to determinate progress
 
         startForeground(notificationId, notification.build())
 
         try {
             // Download audio
-            val audioFile = downloadFile(audioUrl, ".mp3")
+            val audioFile = downloadFile(audioUrl, ".mp3", songId) { progress ->
+                // Update notification and tracker on progress
+                notification.setProgress(100, progress, false)
+                notificationManager.notify(notificationId, notification.build())
+                DownloadTracker.updateStatus(songId, DownloadStatus.Downloading(progress))
+            }
             var imageFile: File? = null
 
             // Download image if enabled and URL exists
             if (downloadImages && imageUrl != null) {
-                imageFile = downloadFile(imageUrl, ".jpg")
+                imageFile = downloadFile(imageUrl, ".jpg", songId, isImage = true) // No progress for image
             }
 
             val downloadedSong = DownloadedSong(
@@ -80,12 +87,14 @@ class DownloadService : Service() {
             )
             db.downloadedSongDao().insert(downloadedSong)
 
+            DownloadTracker.updateStatus(songId, DownloadStatus.Downloaded)
             notificationManager.notify(
                 notificationId,
                 notification.setContentText("Download complete!").setOngoing(false).setProgress(0, 0, false).build()
             )
 
         } catch (e: Exception) {
+            DownloadTracker.updateStatus(songId, DownloadStatus.Idle) // Reset on failure
             notificationManager.notify(
                 notificationId,
                 notification.setContentText("Download failed.").setOngoing(false).setProgress(0, 0, false).build()
@@ -95,13 +104,31 @@ class DownloadService : Service() {
         }
     }
 
-    private fun downloadFile(url: String, suffix: String): File {
+    private fun downloadFile(
+        url: String,
+        suffix: String,
+        songId: Int,
+        isImage: Boolean = false,
+        onProgress: ((Int) -> Unit)? = null
+    ): File {
         val connection = URL(url).openConnection()
         connection.connect()
+        val fileLength = connection.contentLength
         val inputStream = connection.getInputStream()
         val file = File(getExternalFilesDir(null), "${System.currentTimeMillis()}$suffix")
-        file.outputStream().use {
-            inputStream.copyTo(it)
+
+        file.outputStream().use { outputStream ->
+            val buffer = ByteArray(4 * 1024)
+            var bytesRead: Int
+            var totalBytesRead = 0L
+            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                outputStream.write(buffer, 0, bytesRead)
+                totalBytesRead += bytesRead
+                if (fileLength > 0 && !isImage) {
+                    val progress = (totalBytesRead * 100 / fileLength).toInt()
+                    onProgress?.invoke(progress)
+                }
+            }
         }
         return file
     }

@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -28,7 +29,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         _binding = FragmentSettingsBinding.bind(view)
         sessionManager = SessionManager(requireContext())
 
-        // Server URL Logic
+        val isLoggedIn = sessionManager.isLoggedIn()
+
+        // Only show the full settings if the user is logged in
+        binding.loggedInSettings.isVisible = isLoggedIn
+
+        // Server URL Logic (Always available)
         binding.serverUrlEditText.setText(sessionManager.getBaseUrl())
         binding.saveUrlButton.setOnClickListener {
             var newUrl = binding.serverUrlEditText.text.toString().trim()
@@ -57,8 +63,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             }
         }
 
-        setupDefaultSpeedSpinner()
-        setupProSection()
+        // Setup other settings only if logged in
+        if (isLoggedIn) {
+            setupDefaultSpeedSpinner()
+            setupProSection()
+        }
     }
 
     private fun setupDefaultSpeedSpinner() {
@@ -80,9 +89,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupProSection() {
-        // Admin build flag (change this to false for normal user builds)
-        val isAdminBuild = true
-        binding.generateQrButton.visibility = if (isAdminBuild) View.VISIBLE else View.GONE
+        binding.generateQrButton.visibility = if (sessionManager.isAdmin()) View.VISIBLE else View.GONE
 
         if (sessionManager.isPro()) {
             binding.proStatusText.text = "Status: Musically Pro"
@@ -115,7 +122,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun showQrCodeDialog(token: String) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_generate_qr, null)
         val qrCodeImageView = dialogView.findViewById<ImageView>(R.id.qrCodeImageView)
-        // This call will now work because of the corrected import
         val bitmap = QRCode.from(token).withSize(1000, 1000).bitmap()
         qrCodeImageView.setImageBitmap(bitmap)
 

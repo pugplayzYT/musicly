@@ -2,6 +2,7 @@ package com.puggables.musically.ui.artist
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
@@ -12,12 +13,13 @@ import com.puggables.musically.databinding.ItemAlbumWithSongsBinding
 import com.puggables.musically.ui.home.SongAdapter
 
 class AlbumAdapter(
+    private val lifecycleScope: LifecycleCoroutineScope, // Add this
     private var albums: List<Album>,
     private val onSongClicked: (Song) -> Unit,
     private val onArtistClicked: (Song) -> Unit,
     private val onSongLongClicked: (Song) -> Unit,
     private val onAlbumLongClicked: (Album) -> Unit,
-    private val onDownloadClicked: (Song) -> Unit // Add this parameter
+    private val onDownloadClicked: (Song) -> Unit
 ) : RecyclerView.Adapter<AlbumAdapter.AlbumViewHolder>() {
 
     inner class AlbumViewHolder(val binding: ItemAlbumWithSongsBinding) : RecyclerView.ViewHolder(binding.root)
@@ -42,8 +44,8 @@ class AlbumAdapter(
             error(R.drawable.ic_music_note)
         }
 
-        // THIS IS THE FIX: Pass the onDownloadClicked callback to the SongAdapter
-        val songAdapter = SongAdapter(onSongClicked, onArtistClicked, onDownloadClicked).apply {
+        // Pass the lifecycleScope down to the nested SongAdapter
+        val songAdapter = SongAdapter(lifecycleScope, onSongClicked, onArtistClicked, onDownloadClicked).apply {
             setOnItemLongClickListener(onSongLongClicked)
         }
 

@@ -1,8 +1,11 @@
 package com.puggables.musically
 
 import android.content.ComponentName
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
@@ -22,7 +25,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val mainViewModel: MainViewModel by viewModels()
     private lateinit var navController: NavController
-    private var isOffline = false
+    private lateinit var connectivityManager: ConnectivityManager
+
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            super.onAvailable(network)
+            runOnUiThread {
+                updateNavMenuForConnectivity(true)
+            }
+        }
+
+        override fun onLost(network: Network) {
+            super.onLost(network)
+            runOnUiThread {
+                updateNavMenuForConnectivity(false)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +51,8 @@ class MainActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
+
+        connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             if (item.itemId == navController.currentDestination?.id) {
@@ -55,20 +76,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Simple toggle for offline mode simulation. Long-press the bottom nav bar.
-        binding.bottomNavigation.setOnLongClickListener {
-            isOffline = !isOffline
-            binding.bottomNavigation.menu.findItem(R.id.downloadsFragment).isVisible = isOffline
-            Toast.makeText(this, if (isOffline) "Offline Mode On" else "Online Mode On", Toast.LENGTH_SHORT).show()
-            true
-        }
-
-
         navController.addOnDestinationChangedListener { _, dest, _ ->
             val authScreens = setOf(R.id.splashFragment, R.id.loginFragment, R.id.registerFragment)
-            val isAuth = dest.id in authScreens
-            binding.bottomNavigation.isVisible = !isAuth
-            if (isAuth) binding.miniPlayer.isVisible = false
+            val isLoggedIn = MusicallyApplication.sessionManager.isLoggedIn()
+
+            binding.bottomNavigation.isVisible = isLoggedIn && dest.id !in authScreens
+
+            if (!isLoggedIn || dest.id in authScreens) {
+                binding.miniPlayer.isVisible = false
+            }
 
             val menuItem = binding.bottomNavigation.menu.findItem(dest.id)
             if (menuItem != null) {
@@ -91,9 +107,26 @@ class MainActivity : AppCompatActivity() {
         observeViewModel()
     }
 
+    private fun updateNavMenuForConnectivity(isConnected: Boolean) {
+        binding.bottomNavigation.menu.findItem(R.id.downloadsFragment).isVisible = !isConnected
+        binding.bottomNavigation.menu.findItem(R.id.uploadFragment).isVisible = isConnected
+
+        // If offline, and the current screen is the upload screen, navigate home
+        if (!isConnected && navController.currentDestination?.id == R.id.uploadFragment) {
+            navController.navigate(R.id.homeFragment)
+        }
+    }
+
+    // Helper function to check the current network state
+    private fun isNetworkAvailable(): Boolean {
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     private fun observeViewModel() {
         mainViewModel.currentPlayingSong.observe(this) { song ->
-            binding.miniPlayer.isVisible = song != null
+            binding.miniPlayer.isVisible = song != null && MusicallyApplication.sessionManager.isLoggedIn()
             song ?: return@observe
 
             binding.miniPlayerSongTitle.text = song.title
@@ -116,10 +149,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Register the callback to listen for future changes
+        connectivityManager.registerDefaultNetworkCallback(networkCallback)
+
+        // FIX: Check the initial network state when the activity starts
+        val isConnected = isNetworkAvailable()
+        updateNavMenuForConnectivity(isConnected)
+
         val token = SessionToken(this, ComponentName(this, MusicService::class.java))
         val future = MediaController.Builder(this, token).buildAsync()
         future.addListener({
             mainViewModel.mediaController = future.get()
         }, MoreExecutors.directExecutor())
+    }
+
+    override fun onStop() {
+        super.onStop()
+        connectivityManager.unregisterNetworkCallback(networkCallback)
     }
 }

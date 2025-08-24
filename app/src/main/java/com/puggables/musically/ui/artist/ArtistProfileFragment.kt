@@ -97,9 +97,10 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
 
     private fun setupRecyclerViews() {
         singlesAdapter = SongAdapter(
+            viewLifecycleOwner.lifecycleScope, // Add this
             onSongClicked = { song -> mainVM.playOrToggleSong(song, isNewSong = true) },
             onArtistClicked = { /* Already on profile, do nothing */ },
-            onDownloadClicked = { song -> handleDownloadClick(song) } // Pass the handler function
+            onDownloadClicked = { song -> handleDownloadClick(song) }
         ).apply {
             setOnItemLongClickListener { song -> showOwnerMenu(song) }
         }
@@ -147,6 +148,7 @@ class ArtistProfileFragment : Fragment(R.layout.fragment_artist_profile) {
                 binding.albumsHeader.isVisible = artist.albums.isNotEmpty()
                 binding.albumsRecyclerView.isVisible = artist.albums.isNotEmpty()
                 albumAdapter = AlbumAdapter(
+                    viewLifecycleOwner.lifecycleScope, // Add this
                     albums = artist.albums,
                     onSongClicked = { song -> mainVM.playOrToggleSong(song, isNewSong = true) },
                     onArtistClicked = {},

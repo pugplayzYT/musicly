@@ -9,6 +9,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.PlaybackParameters
 import com.puggables.musically.data.models.Song
+import java.io.File
 
 class MainViewModel : ViewModel() {
 
@@ -46,11 +47,24 @@ class MainViewModel : ViewModel() {
 
     fun playOrToggleSong(song: Song, isNewSong: Boolean = false) {
         val ctrl = mediaController ?: return
-        val baseUrl = com.puggables.musically.data.remote.RetrofitInstance.currentBaseUrl
-        val stream = (song.streamUrl ?: "${baseUrl}static/music/${song.filepath}").replace(" ", "%20")
-        val artUrl = song.imageUrl ?: "${baseUrl}static/images/${song.image}"
 
-        val isSame = ctrl.currentMediaItem?.mediaId == stream
+        // FIX: Check if the song is local or remote
+        val isLocal = song.streamUrl?.startsWith("/") == true || song.streamUrl?.startsWith("file://") == true
+        val streamUri: Uri
+        val artUri: Uri
+
+        if (isLocal) {
+            // It's a downloaded song, use file paths
+            streamUri = Uri.fromFile(File(song.streamUrl!!))
+            artUri = if (song.imageUrl != null) Uri.fromFile(File(song.imageUrl)) else Uri.EMPTY
+        } else {
+            // It's a streaming song, use web URLs
+            val baseUrl = com.puggables.musically.data.remote.RetrofitInstance.currentBaseUrl
+            streamUri = Uri.parse((song.streamUrl ?: "${baseUrl}static/music/${song.filepath}").replace(" ", "%20"))
+            artUri = Uri.parse(song.imageUrl ?: "${baseUrl}static/images/${song.image}")
+        }
+
+        val isSame = ctrl.currentMediaItem?.mediaId == streamUri.toString()
         if (isSame && !isNewSong) {
             if (ctrl.isPlaying) ctrl.pause() else ctrl.play()
             return
@@ -65,12 +79,12 @@ class MainViewModel : ViewModel() {
             .setTitle(song.title)
             .setArtist(song.artist)
             .setAlbumTitle(song.album)
-            .setArtworkUri(Uri.parse(artUrl))
+            .setArtworkUri(artUri)
             .build()
 
         val item = MediaItem.Builder()
-            .setMediaId(stream)
-            .setUri(stream)
+            .setMediaId(streamUri.toString())
+            .setUri(streamUri)
             .setMediaMetadata(meta)
             .build()
 

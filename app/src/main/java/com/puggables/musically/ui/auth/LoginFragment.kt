@@ -35,6 +35,10 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
         }
 
+        binding.settingsButton.setOnClickListener {
+            findNavController().navigate(R.id.action_loginFragment_to_settingsFragment)
+        }
+
         observeViewModel()
     }
 
