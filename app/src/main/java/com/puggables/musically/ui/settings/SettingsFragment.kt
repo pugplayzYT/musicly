@@ -158,6 +158,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 }
             }
         }
+        binding.proTutorialLayout.setOnClickListener {
+            binding.proTutorialText.isVisible = !binding.proTutorialText.isVisible
+        }
     }
 
     private fun showQrCodeDialog(token: String) {

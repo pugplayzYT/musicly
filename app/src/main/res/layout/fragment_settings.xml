@@ -92,6 +92,34 @@
                 android:text="Activate Pro with QR Code"
                 android:layout_marginTop="8dp"/>
 
+            <LinearLayout
+                android:id="@+id/proTutorialLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp"
+                android:background="?attr/selectableItemBackground"
+                android:padding="8dp">
+
+                <TextView
+                    android:id="@+id/proTutorialTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="How does this work?"
+                    android:textColor="#1DB954"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/proTutorialText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="To get Pro, you'll need an admin to generate a special QR code for you. Once they've done that, tap the 'Activate Pro with QR Code' button above and scan the code they show you."
+                    android:textColor="#AAAAAA"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+
             <Button
                 android:id="@+id/generateQrButton"
                 android:layout_width="wrap_content"
